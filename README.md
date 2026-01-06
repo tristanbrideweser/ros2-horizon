@@ -11,8 +11,36 @@ Robotic development can be complicated. Multiple terminal windows, several synch
 
 ### Installation 
 
+```bash
+cargo build --release
+```
+
+### Usage
+
+Run lazyros from your ROS2 workspace root:
+
+```bash
+cd ~/your_ros2_workspace
+/path/to/lazyros/target/release/lazyros
+```
+
+Or use the test script:
+```bash
+./test_lazyros.sh ~/your_ros2_workspace
+```
+
+**Important**: Make sure ROS2 is sourced in your environment:
+```bash
+source /opt/ros/humble/setup.bash  # or your ROS2 distro
+```
+
 ### Cheat Sheet
 
 | Key | Action |
 |-----|--------|
-|q|Quit|
+| b | Build and install package (colcon build --symlink-install) |
+| q | Quit |
+
+### Testing
+
+See [TESTING.md](TESTING.md) for detailed testing instructions with real ROS2 packages.
