@@ -6,14 +6,38 @@ use ratatui::prelude::*;
 use std::io;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 
+#[derive(Clone, Copy, PartialEq)]
+pub enum ActivePanel {
+    Left,
+    RightTop,
+    RightBottom,
+}
+
+impl ActivePanel {
+    pub fn next(&self) -> Self {
+        match self {
+            ActivePanel::Left => ActivePanel::RightTop,
+            ActivePanel::RightTop => ActivePanel::RightBottom,
+            ActivePanel::RightBottom => ActivePanel::Left,
+        }
+    }
+
+    pub fn prev(&self) -> Self {
+        match self {
+            ActivePanel::Left => ActivePanel::RightBottom,
+            ActivePanel::RightTop => ActivePanel::Left,
+            ActivePanel::RightBottom => ActivePanel::RightTop,
+        }
+    }
+}
+
 pub struct App {
-    #[allow(dead_code)]
     pub topics: Vec<String>,
-    #[allow(dead_code)]
     pub selected_index: usize,
     pub logs: Vec<String>,
     pub exit: bool,
     pub building: bool,
+    pub active_panel: ActivePanel,
 }
 
 impl App {
@@ -24,6 +48,7 @@ impl App {
             logs: vec!["LazyROS started".to_string(), "Press 'b' to build and install package".to_string()],
             exit: false,
             building: false,
+            active_panel: ActivePanel::Left,
         }
     }
 
@@ -54,6 +79,22 @@ impl App {
             KeyCode::Char('b') => {
                 self.build();
             }
+            KeyCode::Tab => {
+                self.active_panel = self.active_panel.next();
+            }
+            KeyCode::BackTab => {
+                self.active_panel = self.active_panel.prev();
+            }
+            KeyCode::Up => {
+                if self.active_panel == ActivePanel::Left && self.selected_index > 0 {
+                    self.selected_index -= 1;
+                }
+            }
+            KeyCode::Down => {
+                if self.active_panel == ActivePanel::Left && self.selected_index < self.topics.len().saturating_sub(1) {
+                    self.selected_index += 1;
+                }
+            }
             _ => {}
         }
         Ok(())
@@ -66,7 +107,7 @@ impl App {
         self.building = true;
         self.logs.push("Building package with colcon...".to_string());
         
-        match cli::run_colcon_build() {
+        match cli::run_colcon_build_symlink_install() {
             Ok(output) => {
                 // Split output into lines and add them
                 let lines: Vec<&str> = output.lines().collect();
